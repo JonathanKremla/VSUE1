@@ -16,6 +16,10 @@ public class MailboxServer implements IMailboxServer, Runnable {
   private PrintStream out;
   private Config config;
   private ServerSocket socket;
+  private String domain;
+  private int tcpDmapPort;
+  private int tcpDmtpPort;
+  private String users;
 
   /**
    * Creates a new server instance.
@@ -29,6 +33,10 @@ public class MailboxServer implements IMailboxServer, Runnable {
     this.in = in;
     this.out = out;
     this.config = config;
+    domain = config.getString("domain");
+    users = config.getString("users.config");
+    tcpDmapPort = config.getInt("dmap.tcp.port");
+    tcpDmtpPort = config.getInt("dmtp.tcp.port");
   }
 
   @Override
@@ -67,8 +75,8 @@ public class MailboxServer implements IMailboxServer, Runnable {
 
   private void createListenerThread(){
     try {
-      socket = new ServerSocket(config.getInt(("tcp.port")));
-      new ListenerThread(socket).start();
+      socket = new ServerSocket(tcpDmapPort);
+      new ListenerThread(socket, domain, users).start();
     }
     catch (IOException e){
       System.err.println(e.getMessage());

@@ -6,16 +6,20 @@ import java.net.ServerSocket;
 public class ListenerThread extends Thread {
 
   private ServerSocket serverSocket;
+  private String users;
+  private String domain;
 
-  public ListenerThread(ServerSocket serverSocket) {
+  public ListenerThread(ServerSocket serverSocket, String domain, String userConfig) {
     this.serverSocket = serverSocket;
+    this.users = userConfig;
+    this.domain = domain;
   }
 
   public void run() {
     while (true) {
       ClientCommunicator communicator = new ClientCommunicator(serverSocket);
       communicator.establishConnection();
-      new CommunicationThread(communicator).start();
+      new CommunicationThread(communicator, users, domain).start();
     }
 
   }

@@ -9,6 +9,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 
+/**
+ * Communication Interfaces with Client through socket
+ */
 public class ClientCommunicator{
 
   private ServerSocket serverSocket;
