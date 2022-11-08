@@ -9,6 +9,7 @@ public class Email {
   private String subject;
   private String data;
 
+  public Email(){}
 
   public Email(String from, String to, String subject, String data) {
     this.from = from;

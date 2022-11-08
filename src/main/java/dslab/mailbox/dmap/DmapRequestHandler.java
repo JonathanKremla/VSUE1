@@ -7,7 +7,6 @@ import dslab.util.Config;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 /**
  * handles clients request on one thread
@@ -22,28 +21,25 @@ public class DmapRequestHandler {
   public DmapRequestHandler(String userConfig, String domain) {
     this.domain = domain;
     this.config = new Config(userConfig);
-    MessageStorage.loadUsers(config);
     fillResponseMap();
-    //TODO REMOVE LATER: Fill MessageStorage with dummy data
-    MessageStorage.put("zaphod", new Email("someone", "trillian", "notjing", "nothing"));
   }
 
   /**
-   * handles a specific request(key)
-   * @param key request to handle
+   * handles a specific request
+   * @param request request to handle
    * @return List of responses to be sent to the client
    */
-  public List<String> handle(String key) {
+  public List<String> handle(String request) {
     //TODO throw exceptions
     fillResponseMap();
-    if (responseMap.containsKey(key)) {
-      var answer =  responseMap.get(key);
-      handleLogicalRequests(key);
+    if (responseMap.containsKey(request)) {
+      var answer =  responseMap.get(request);
+      handleLogicalRequests(request);
       return answer;
     }
     //ToDO change to fitting exception
     List<String> invalidRequest = new ArrayList<>();
-    invalidRequest.add("invalid Request");
+    invalidRequest.add("error");
     return invalidRequest;
   }
 

@@ -1,6 +1,10 @@
 package dslab.mailbox;
 
+import at.ac.tuwien.dsg.orvell.StopShellException;
 import dslab.ComponentFactory;
+import dslab.mailbox.dmap.DmapListenerThread;
+import dslab.mailbox.dmtp.DmtpListenerThread;
+import dslab.shell.IShell;
 import dslab.util.Config;
 
 import java.io.BufferedReader;
@@ -9,17 +13,21 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.ServerSocket;
+import java.util.Set;
 
 public class MailboxServer implements IMailboxServer, Runnable {
 
   private InputStream in;
   private PrintStream out;
   private Config config;
-  private ServerSocket socket;
-  private String domain;
-  private int tcpDmapPort;
-  private int tcpDmtpPort;
-  private String users;
+  private ServerSocket dmapSocket;
+  private ServerSocket dmtpSocket;
+  private DmapListenerThread dmapListenerThread;
+  private DmtpListenerThread dmtpListenerThread;
+  private final String domain;
+  private final int tcpDmapPort;
+  private final int tcpDmtpPort;
+  private final String users;
 
   /**
    * Creates a new server instance.
@@ -41,42 +49,44 @@ public class MailboxServer implements IMailboxServer, Runnable {
 
   @Override
   public void run() {
-    createListenerThread();
+    MessageStorage.loadUsers(new Config(users));
+    createDmapListenerThread();
+    createDmtpListenerThread();
     System.out.println("Server is up!");
 
-    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-
     try {
-      // read commands from the console
-      reader.readLine();
-    } catch (IOException e) {
-      // IOException from System.in is very very unlikely (or impossible)
-      // and cannot be handled
+      IShell shell = ComponentFactory.createMailboxShell("shell-mailbox", System.in, System.out);
+      shell.run();
     }
-
-    // close socket and listening thread
-    close();
-  }
-
-  public void close(){
-    if (socket != null) {
-      try {
-        socket.close();
-      } catch (IOException e) {
-        System.err.println("Error while closing server socket: " + e.getMessage());
-      }
+    catch (Exception e){
+      shutdown();
     }
+    shutdown();
+
   }
 
   @Override
   public void shutdown() {
-    // TODO
+    dmapListenerThread.stopThread();
+    dmtpListenerThread.stopThread();
   }
 
-  private void createListenerThread(){
+  private void createDmapListenerThread(){
     try {
-      socket = new ServerSocket(tcpDmapPort);
-      new ListenerThread(socket, domain, users).start();
+      dmapSocket = new ServerSocket(tcpDmapPort);
+      dmapListenerThread = new DmapListenerThread(dmapSocket, domain, users);
+      dmapListenerThread.start();
+    }
+    catch (IOException e){
+      System.err.println(e.getMessage());
+    }
+  }
+
+  private void createDmtpListenerThread(){
+    try {
+      dmtpSocket = new ServerSocket(tcpDmtpPort);
+      dmtpListenerThread = new DmtpListenerThread(dmtpSocket, domain, users);
+      dmtpListenerThread.start();
     }
     catch (IOException e){
       System.err.println(e.getMessage());

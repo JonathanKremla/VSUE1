@@ -24,7 +24,7 @@ public class ClientCommunicator{
   }
 
 
-  public void establishConnection() {
+  public boolean establishConnection() {
     try {
       socket = serverSocket.accept();
       reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -34,12 +34,13 @@ public class ClientCommunicator{
       // when the socket is closed, the I/O methods of the Socket will throw a SocketException
       // almost all SocketException cases indicate that the socket was closed
       System.out.println("SocketException while handling socket: " + e.getMessage());
-
+      return false;
     }
     catch (IOException e) {
       // you should properly handle all other exceptions
       throw new UncheckedIOException(e);
     }
+    return true;
   }
 
   public String readLine(){
