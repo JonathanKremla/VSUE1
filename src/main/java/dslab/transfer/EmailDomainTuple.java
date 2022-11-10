@@ -1,28 +1,32 @@
 package dslab.transfer;
 
 
-public class Tuple<E, L> {
-  Object first;
-  Object second;
+import dslab.mailbox.Email;
 
-  public Tuple(Object first, Object second){
+import java.util.List;
+
+public class EmailDomainTuple {
+  Email first;
+  List<String> second;
+
+  public EmailDomainTuple(Email first, List<String> second){
     this.first = first;
     this.second = second;
   }
 
-  public Object getFirst() {
+  public Email getFirst() {
     return first;
   }
 
-  public Object getSecond() {
+  public List<String> getSecond() {
     return second;
   }
 
-  public void setFirst(Object first) {
+  public void setFirst(Email first) {
     this.first = first;
   }
 
-  public void setSecond(Object second) {
+  public void setSecond(List<String> second) {
     this.second = second;
   }
 }
