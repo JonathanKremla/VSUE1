@@ -1,4 +1,4 @@
-package dslab.mailbox;
+package dslab.util.datastructures;
 
 import java.util.List;
 

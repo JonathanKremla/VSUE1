@@ -1,6 +1,6 @@
 package dslab.transfer.dmtp;
 
-import dslab.mailbox.Email;
+import dslab.util.datastructures.Email;
 import dslab.transfer.MessageDistributer;
 
 import java.util.ArrayList;
@@ -37,13 +37,13 @@ public class DmtpRequestHandler extends Thread {
       case "send":
         return parseSend();
       default:
-        return "invalid Request";
+        return "error invalid Request";
     }
   }
 
   private String parseTo(String request) {
     if (!transferBegan) {
-      return "invalid request";
+      return "error invalid request";
     }
     var recipients = Arrays.stream(request.split(" "))
             .filter(s -> !s.equals(",") && !s.equals("to"))
@@ -64,15 +64,15 @@ public class DmtpRequestHandler extends Thread {
 
   private String parseFrom(String request) {
     if (!transferBegan) {
-      return "invalid request";
+      return "error invalid request";
     }
     var splitRequest = request.split(" ");
     if (splitRequest.length > 2) {
-      return "Only one sender possible";
+      return "error only one sender possible";
     }
     var email = splitRequest[1];
     if (!email.matches("(.*)@(.*)")) {
-      return "Invalid Email";
+      return "error invalid Email";
     }
     receivedEmail.setFrom(email);
     return "ok";
@@ -81,7 +81,7 @@ public class DmtpRequestHandler extends Thread {
 
   private String parseSubject(String request) {
     if (!transferBegan) {
-      return "invalid request";
+      return "error invalid request";
     }
     receivedEmail.setSubject(request.substring(7).trim());
     return "ok";
@@ -89,7 +89,7 @@ public class DmtpRequestHandler extends Thread {
 
   private String parseData(String request) {
     if (!transferBegan) {
-      return "invalid request";
+      return "error invalid request";
     }
     receivedEmail.setData(request.substring(4).trim());
     return "ok";
@@ -124,10 +124,10 @@ public class DmtpRequestHandler extends Thread {
 
   private String parseBegin(String request) {
     if (request.split(" ").length > 1) {
-      return "invalid request";
+      return "error invalid request";
     }
     if (transferBegan) {
-      return "invalid request";
+      return "error invalid request";
     }
     transferBegan = true;
     return "ok";

@@ -1,6 +1,6 @@
-package dslab.transfer;
+package dslab.util.datastructures;
 
-import dslab.mailbox.Email;
+import dslab.util.datastructures.Email;
 
 import java.util.LinkedList;
 import java.util.Queue;

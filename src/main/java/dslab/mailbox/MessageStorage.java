@@ -1,6 +1,7 @@
 package dslab.mailbox;
 
 import dslab.util.Config;
+import dslab.util.datastructures.Email;
 
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,12 +10,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * Stores Messages of all Users
  */
 public class MessageStorage {
-  private static ConcurrentHashMap<String, HashMap<Integer, Email>> messages = new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<String, ConcurrentHashMap<Integer, Email>> messages = new ConcurrentHashMap<>();
   private static HashMap<String, Integer> indexMap = new HashMap<>();
 
   public static void loadUsers(Config userConfig) {
     for (String k : userConfig.listKeys()) {
-      messages.put(k, new HashMap<>());
+      messages.put(k, new ConcurrentHashMap<>());
       indexMap.put(k, 1);
     }
   }

@@ -1,6 +1,6 @@
 package dslab.mailbox.dmtp;
 
-import dslab.mailbox.Email;
+import dslab.util.datastructures.Email;
 import dslab.mailbox.MessageStorage;
 import dslab.util.Config;
 
@@ -40,7 +40,7 @@ public class DmtpRequestHandler {
       case "send":
         return parseSend();
       default:
-        return "invalid Request";
+        return "error invalid Request";
     }
   }
 
@@ -73,11 +73,11 @@ public class DmtpRequestHandler {
     if(!transferBegan) return "invalid request";
     var splitRequest = request.split(" ");
     if (splitRequest.length > 2) {
-      return "Only one sender possible";
+      return "error only one sender possible";
     }
     var email = splitRequest[1];
     if (!email.matches("(.*)@(.*)")) {
-      return "Invalid Email";
+      return "error invalid Email";
     }
     receivedEmail.setFrom(email);
     return "ok";
@@ -100,7 +100,7 @@ public class DmtpRequestHandler {
   private String parseSend() {
     if(!transferBegan) return "invalid request";
     if(!allEmailAttributesSet()){
-      return "Some attributes of email not set";
+      return "error some attributes of email not set";
     }
     this.transferBegan = false;
     for(String recipient : recipients ) {
@@ -120,10 +120,10 @@ public class DmtpRequestHandler {
 
   private String parseBegin(String request){
     if(request.split(" ").length > 1){
-      return "invalid request";
+      return "error invalid request";
     }
     if(transferBegan){
-      return "invalid request";
+      return "error invalid request";
     }
     transferBegan = true;
     return "ok";

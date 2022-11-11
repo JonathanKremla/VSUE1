@@ -1,7 +1,8 @@
 package dslab.transfer;
 
-import dslab.mailbox.Email;
 import dslab.util.Config;
+import dslab.util.datastructures.DataQueue;
+import dslab.util.datastructures.Email;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -54,8 +55,12 @@ public class MessageDistributer {
       queue.notifyAllForFull();
       logger.info("state of Message Distributer :" + toSend);
       for (String domain : toSend.getDomains()) {
-        establishClientConnection(domain);
-        sendMail(toSend);
+        if (!establishClientConnection(domain)) {
+          sendFailureMail(toSend.getFrom());
+        }
+        else {
+          sendMail(toSend);
+        }
       }
       logger.info("finished sending all emails");
     }
@@ -103,7 +108,7 @@ public class MessageDistributer {
       System.err.println(mailboxIn.readLine());
       mailboxOut.close();
       mailboxIn.close();
-    } catch (Exception e) {
+    } catch (IOException e) {
       e.printStackTrace();
     }
 
@@ -121,6 +126,15 @@ public class MessageDistributer {
     } catch (IOException e) {
       e.printStackTrace();
     }
+  }
+
+  private void sendFailureMail(String from) {
+    String domain = from.split("@")[1];
+    if(establishClientConnection(domain)) {
+      //TODO change maybe
+      sendMail(new Email("mailer@[127.0.0.1]", from, "Failed to send Email", "Failed to send Email"));
+    }
+
   }
 
 
