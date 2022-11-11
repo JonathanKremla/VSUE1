@@ -16,6 +16,7 @@ public class DmtpListenerThread extends Thread{
 
   public DmtpListenerThread(ServerSocket serverSocket) {
     this.serverSocket = serverSocket;
+    Thread.currentThread().setName("DmtpListenerThread");
   }
 
   public void run() {

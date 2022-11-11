@@ -1,25 +1,25 @@
 package dslab.transfer.dmtp;
 
-import dslab.mailbox.ClientCommunicator;
 import dslab.mailbox.Email;
 import dslab.transfer.MessageDistributer;
 
-import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class DmtpRequestHandler extends Thread {
 
   private Email receivedEmail = new Email();
   private boolean transferBegan = false;
-  private List<String> domainList = new ArrayList<>();
   private final MessageDistributer messageDistributer;
+  private final Logger logger = Logger.getLogger(this.getClass().getName());
 
   public DmtpRequestHandler(MessageDistributer messageDistributer){
     this.messageDistributer = messageDistributer;
+    Thread.currentThread().setName("DmtpRequestHandlerThread");
   }
 
   public String handleRequest(String request) {
@@ -54,10 +54,11 @@ public class DmtpRequestHandler extends Thread {
                     + (Objects.equals(emails, "") ? "" : " , ")
                     + email));
 
+    List<String> domainList = new ArrayList<>();
     for (String recipient : recipients) {
-      this.domainList.add(recipient.split("@")[1]);
+      domainList.add(recipient.split("@")[1]);
     }
-    this.domainList = this.domainList.stream().distinct().collect(Collectors.toList());
+    receivedEmail.setDomains(domainList.stream().distinct().collect(Collectors.toList()));
     return "ok " + domainList.size();
   }
 
@@ -96,20 +97,21 @@ public class DmtpRequestHandler extends Thread {
   }
 
   private String parseSend() {
+    logger.info("parseSend");
     if (!transferBegan) {
-      return "invalid request";
+      return "error";
     }
     if (!allEmailAttributesSet()) {
-      return "Some attributes of email not set";
+      return "error";
     }
     try {
-      messageDistributer.distribute(receivedEmail, domainList);
+      logger.info("call MessageDistributer: " + receivedEmail.toString());
+      messageDistributer.distribute(receivedEmail);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
     this.transferBegan = false;
     this.receivedEmail = new Email();
-    this.domainList.clear();
     return "ok";
   }
 
@@ -129,6 +131,10 @@ public class DmtpRequestHandler extends Thread {
     }
     transferBegan = true;
     return "ok";
+  }
+
+  public void stopThread(){
+    messageDistributer.stopThread();
   }
 
 }

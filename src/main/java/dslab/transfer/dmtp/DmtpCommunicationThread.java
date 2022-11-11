@@ -8,20 +8,20 @@ import java.util.Objects;
 public class DmtpCommunicationThread extends Thread {
 
   private ClientCommunicator communicator;
-  private String domain;
   private boolean stopped = false;
   private final MessageDistributer messageDistributer = new MessageDistributer();
+  private DmtpRequestHandler requestHandler;
 
   public DmtpCommunicationThread(ClientCommunicator communicator) {
     this.communicator = communicator;
-    this.domain = domain;
+    Thread.currentThread().setName("DmtpCommunicationThread");
   }
 
   public void run() {
 
     var senderThread = sender;
     senderThread.start();
-    DmtpRequestHandler requestHandler = new DmtpRequestHandler(messageDistributer);
+    requestHandler = new DmtpRequestHandler(messageDistributer);
     requestHandler.start();
     String request;
     communicator.println("ok DMTP");
@@ -40,16 +40,19 @@ public class DmtpCommunicationThread extends Thread {
 
   public void stopThread() {
     communicator.close();
+    try {
+      requestHandler.stopThread();
+    }
+    catch (NullPointerException ignored){
+      //happens if no request was sent to server => server got shutdown
+      //before any connections were established
+    }
     this.stopped = true;
   }
 
   Thread sender = new Thread(() -> {
-    try {
-      messageDistributer.forward();
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
+    Thread.currentThread().setName("senderThread");
+    messageDistributer.forward();
   });
 
 

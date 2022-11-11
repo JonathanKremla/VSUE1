@@ -59,10 +59,8 @@ public class MailboxServer implements IMailboxServer, Runnable {
       shell.run();
     }
     catch (Exception e){
-      shutdown();
+      e.printStackTrace();
     }
-    shutdown();
-
   }
 
   @Override

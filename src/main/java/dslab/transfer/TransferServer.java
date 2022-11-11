@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.ServerSocket;
+import java.util.logging.Logger;
 
 import dslab.ComponentFactory;
 import dslab.transfer.dmtp.DmtpListenerThread;
@@ -15,6 +16,7 @@ public class TransferServer implements ITransferServer, Runnable {
     private final int tcpDmtpPort;
     private ServerSocket dmtpSocket;
     private DmtpListenerThread dmtpListenerThread;
+    private final Logger logger = Logger.getLogger(this.getClass().getName());
     /**
      * Creates a new server instance.
      *
@@ -33,18 +35,23 @@ public class TransferServer implements ITransferServer, Runnable {
         System.out.println("Server is up!");
 
         try {
-            IShell shell = ComponentFactory.createMailboxShell("shell-mailbox", System.in, System.out);
+            IShell shell = ComponentFactory.createMailboxShell("shell-transfer", System.in, System.out);
             shell.run();
         }
         catch (Exception e){
-            shutdown();
+            e.printStackTrace();
         }
-        shutdown();
     }
 
     @Override
     public void shutdown() {
-        // TODO
+        try {
+            dmtpSocket.close();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+        dmtpListenerThread.stopThread();
     }
 
     public void createDmtpListenerThread(){
@@ -61,6 +68,7 @@ public class TransferServer implements ITransferServer, Runnable {
     public static void main(String[] args) throws Exception {
         ITransferServer server = ComponentFactory.createTransferServer(args[0], System.in, System.out);
         server.run();
+        System.out.println("Done");
     }
 
 }
