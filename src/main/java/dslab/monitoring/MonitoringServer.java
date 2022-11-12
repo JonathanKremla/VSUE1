@@ -1,13 +1,24 @@
 package dslab.monitoring;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.net.DatagramSocket;
+import java.util.List;
 
 import dslab.ComponentFactory;
+import dslab.monitoring.udp.UdpListenerThread;
+import dslab.shell.IShell;
 import dslab.util.Config;
 
 public class MonitoringServer implements IMonitoringServer {
 
+    DatagramSocket datagramSocket;
+    private InputStream in;
+    private PrintStream out;
+    private Config config;
     /**
      * Creates a new server instance.
      *
@@ -17,22 +28,49 @@ public class MonitoringServer implements IMonitoringServer {
      * @param out the output stream to write console output to
      */
     public MonitoringServer(String componentId, Config config, InputStream in, PrintStream out) {
-        // TODO
+        this.in = in;
+        this.out = out;
+        this.config = config;
     }
 
     @Override
     public void run() {
-        // TODO
+        try {
+            // constructs a datagram socket and binds it to the specified port
+            datagramSocket = new DatagramSocket(config.getInt("udp.port"));
+
+            // create a new thread to listen for incoming packets
+            new UdpListenerThread(datagramSocket).start();
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot listen on UDP port.", e);
+        }
+
+
+        try {
+            IShell shell = ComponentFactory.createMonitoringShell(this, "shell-monitor", in, out);
+            shell.run();
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            shutdown();
+        }
+        shutdown();
     }
 
     @Override
     public void addresses() {
-        // TODO
+        List<String> addresses = UsageStaticsticsStorage.addresses();
+        for(String address : addresses){
+            out.println(address);
+        }
     }
 
     @Override
     public void servers() {
-        // TODO
+        List<String> servers = UsageStaticsticsStorage.servers();
+        for(String server : servers){
+            out.println(server);
+        }
     }
 
     @Override

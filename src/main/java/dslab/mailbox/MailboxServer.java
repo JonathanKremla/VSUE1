@@ -1,19 +1,15 @@
 package dslab.mailbox;
 
-import at.ac.tuwien.dsg.orvell.StopShellException;
 import dslab.ComponentFactory;
 import dslab.mailbox.dmap.DmapListenerThread;
 import dslab.mailbox.dmtp.DmtpListenerThread;
 import dslab.shell.IShell;
 import dslab.util.Config;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.ServerSocket;
-import java.util.Set;
 
 public class MailboxServer implements IMailboxServer, Runnable {
 
@@ -55,7 +51,7 @@ public class MailboxServer implements IMailboxServer, Runnable {
     System.out.println("Server is up!");
 
     try {
-      IShell shell = ComponentFactory.createMailboxShell("shell-mailbox", in, out);
+      IShell shell = ComponentFactory.createBasicShell("shell-mailbox", in, out);
       shell.run();
     }
     catch (Exception e){

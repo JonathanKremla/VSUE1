@@ -3,15 +3,14 @@ package dslab.shell;
 import at.ac.tuwien.dsg.orvell.Shell;
 import at.ac.tuwien.dsg.orvell.StopShellException;
 import at.ac.tuwien.dsg.orvell.annotation.Command;
-import dslab.util.Config;
 
 import java.io.InputStream;
 import java.io.PrintStream;
 
-public class ShellMailbox implements IShell,Runnable{
+public class BasicShell implements IShell,Runnable{
   private Shell shell;
 
-  public ShellMailbox(String componentId, InputStream inputStream, PrintStream outputStream) {
+  public BasicShell(String componentId, InputStream inputStream, PrintStream outputStream) {
 
     /*
      * First, create a new Shell instance and provide an InputStream to read from,
