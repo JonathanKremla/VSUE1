@@ -8,7 +8,8 @@ import dslab.mailbox.MailboxServer;
 import dslab.monitoring.IMonitoringServer;
 import dslab.monitoring.MonitoringServer;
 import dslab.shell.IShell;
-import dslab.shell.ShellMailbox;
+import dslab.shell.BasicShell;
+import dslab.shell.MonitoringShell;
 import dslab.transfer.ITransferServer;
 import dslab.transfer.TransferServer;
 import dslab.util.Config;
@@ -42,11 +43,16 @@ public final class ComponentFactory {
         Config config = new Config(componentId);
         return new MonitoringServer(componentId, config, in, out);
     }
-    public static IShell createMailboxShell(String componentName, InputStream in, PrintStream out)
+    public static IShell createBasicShell(String componentName, InputStream in, PrintStream out)
             throws Exception {
         // Instantiate a new ShellExample with the given credentials and return
         // it
-        return new ShellMailbox(componentName, in, out);
+        return new BasicShell(componentName, in, out);
+    }
+
+    public static IShell createMonitoringShell(MonitoringServer server, String componentName, InputStream in, PrintStream out)
+            throws Exception{
+        return new MonitoringShell(server, componentName, in, out);
     }
 
     /**

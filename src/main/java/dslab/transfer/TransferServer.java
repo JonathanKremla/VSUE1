@@ -18,6 +18,7 @@ public class TransferServer implements ITransferServer, Runnable {
     private final int tcpDmtpPort;
     private ServerSocket dmtpSocket;
     private DmtpListenerThread dmtpListenerThread;
+    private Config transferConfig;
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     /**
      * Creates a new server instance.
@@ -30,7 +31,8 @@ public class TransferServer implements ITransferServer, Runnable {
     public TransferServer(String componentId, Config config, InputStream in, PrintStream out) {
         this.in = in;
         this.out = out;
-        tcpDmtpPort = config.getInt("tcp.port");
+        this.transferConfig = config;
+        tcpDmtpPort = transferConfig.getInt("tcp.port");
     }
 
     @Override
@@ -39,7 +41,7 @@ public class TransferServer implements ITransferServer, Runnable {
         System.out.println("Server is up!");
 
         try {
-            IShell shell = ComponentFactory.createMailboxShell("shell-transfer", in, out);
+            IShell shell = ComponentFactory.createBasicShell("shell-transfer", in, out);
             shell.run();
         }
         catch (Exception e){
@@ -63,7 +65,7 @@ public class TransferServer implements ITransferServer, Runnable {
     public void createDmtpListenerThread(){
         try {
             dmtpSocket = new ServerSocket(tcpDmtpPort);
-            dmtpListenerThread = new DmtpListenerThread(dmtpSocket);
+            dmtpListenerThread = new DmtpListenerThread(dmtpSocket, transferConfig);
             dmtpListenerThread.start();
         }
         catch (IOException e){

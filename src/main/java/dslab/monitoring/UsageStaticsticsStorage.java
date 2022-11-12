@@ -24,7 +24,7 @@ public class UsageStaticsticsStorage {
     for (String usageStatistic : usageStatistics) {
       String address = usageStatistic.split(" ")[1];
       Integer c = count.get(address) == null ? 1 : count.get(address);
-      count.put(address, c);
+      count.put(address, c + 1);
       if (!addresses.contains(address)) {
         addresses.add(address);
       }
@@ -43,7 +43,7 @@ public class UsageStaticsticsStorage {
         servers.add(server);
       }
     }
-    return servers.stream().map(x -> x + count.get(x)).collect(Collectors.toList());
+    return servers.stream().map(x -> x + " " + count.get(x)).collect(Collectors.toList());
 
   }
 

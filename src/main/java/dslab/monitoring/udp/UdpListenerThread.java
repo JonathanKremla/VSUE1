@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 public class UdpListenerThread extends Thread{
   private DatagramSocket datagramSocket;
   private Logger logger = Logger.getLogger(this.getClass().getName());
+  private boolean stopped = false;
 
   public UdpListenerThread(DatagramSocket datagramSocket) {
     this.datagramSocket = datagramSocket;
@@ -22,7 +23,7 @@ public class UdpListenerThread extends Thread{
     byte[] buffer;
     DatagramPacket packet;
     try {
-      while (true) {
+      while (!stopped) {
         buffer = new byte[1024];
         // create a datagram packet of specified length (buffer.length)
         /*
@@ -56,5 +57,13 @@ public class UdpListenerThread extends Thread{
       }
     }
 
+  }
+
+
+  public void stopThread(){
+    this.stopped = true;
+    if(!datagramSocket.isClosed()) {
+      datagramSocket.close();
+    }
   }
 }

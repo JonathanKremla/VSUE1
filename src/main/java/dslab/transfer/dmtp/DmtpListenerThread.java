@@ -1,6 +1,7 @@
 package dslab.transfer.dmtp;
 
 import dslab.mailbox.ClientCommunicator;
+import dslab.util.Config;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -14,9 +15,11 @@ public class DmtpListenerThread extends Thread {
   private boolean stopped = false;
   private ExecutorService executor = Executors.newCachedThreadPool();
   private ClientCommunicator communicator;
+  private Config transferConfig;
 
-  public DmtpListenerThread(ServerSocket serverSocket) {
+  public DmtpListenerThread(ServerSocket serverSocket, Config transferConfig) {
     this.serverSocket = serverSocket;
+    this.transferConfig = transferConfig;
     Thread.currentThread().setName("DmtpListenerThread");
   }
 
@@ -26,7 +29,7 @@ public class DmtpListenerThread extends Thread {
       if (!communicator.establishConnection()) {
         break;
       }
-      executor.execute(new DmtpCommunicationThread(communicator));
+      executor.execute(new DmtpCommunicationThread(communicator, transferConfig));
     }
     executor.shutdownNow();
   }

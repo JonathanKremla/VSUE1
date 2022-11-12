@@ -19,6 +19,7 @@ public class MonitoringServer implements IMonitoringServer {
     private InputStream in;
     private PrintStream out;
     private Config config;
+    private UdpListenerThread udpListenerThread;
     /**
      * Creates a new server instance.
      *
@@ -40,7 +41,8 @@ public class MonitoringServer implements IMonitoringServer {
             datagramSocket = new DatagramSocket(config.getInt("udp.port"));
 
             // create a new thread to listen for incoming packets
-            new UdpListenerThread(datagramSocket).start();
+            udpListenerThread = new UdpListenerThread(datagramSocket);
+            udpListenerThread.start();
         } catch (IOException e) {
             throw new RuntimeException("Cannot listen on UDP port.", e);
         }
@@ -75,7 +77,11 @@ public class MonitoringServer implements IMonitoringServer {
 
     @Override
     public void shutdown() {
-        // TODO
+        if(!datagramSocket.isClosed()){
+            datagramSocket.close();
+        }
+        udpListenerThread.stopThread();
+
     }
 
     public static void main(String[] args) throws Exception {

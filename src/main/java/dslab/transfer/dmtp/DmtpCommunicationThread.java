@@ -2,6 +2,7 @@ package dslab.transfer.dmtp;
 
 import dslab.mailbox.ClientCommunicator;
 import dslab.transfer.MessageDistributer;
+import dslab.util.Config;
 
 import java.util.Objects;
 
@@ -12,9 +13,10 @@ public class DmtpCommunicationThread extends Thread {
   private final MessageDistributer messageDistributer = new MessageDistributer();
   private DmtpRequestHandler requestHandler;
 
-  public DmtpCommunicationThread(ClientCommunicator communicator) {
+  public DmtpCommunicationThread(ClientCommunicator communicator, Config transferConfig) {
     this.communicator = communicator;
     Thread.currentThread().setName("DmtpCommunicationThread");
+    messageDistributer.setTransferConfig(transferConfig);
   }
 
   public void run() {

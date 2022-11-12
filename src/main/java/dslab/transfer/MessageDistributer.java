@@ -4,11 +4,17 @@ import dslab.util.Config;
 import dslab.util.datastructures.DataQueue;
 import dslab.util.datastructures.Email;
 
+import javax.xml.crypto.Data;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.MissingResourceException;
 import java.util.logging.Logger;
 
@@ -18,8 +24,13 @@ public class MessageDistributer {
   private PrintWriter mailboxOut;
   private BufferedReader mailboxIn;
   private Config domainConfig = new Config("domains");
+  private Config transferConfig;
   private boolean stopped = false;
   private final Logger logger = Logger.getLogger(MessageDistributer.class.getName());
+
+  public void setTransferConfig(Config transferConfig){
+    this.transferConfig = transferConfig;
+  }
 
   public void distribute(Email email) throws InterruptedException {
     logger.info("distribute: " + email.toString());
@@ -59,6 +70,7 @@ public class MessageDistributer {
           sendFailureMail(toSend.getFrom());
         }
         else {
+          sendStatistics(toSend);
           sendMail(toSend);
         }
       }
@@ -110,6 +122,35 @@ public class MessageDistributer {
       mailboxIn.close();
     } catch (IOException e) {
       e.printStackTrace();
+    }
+
+  }
+
+  private void sendStatistics(Email toSend){
+    logger.info("sendStatistics: " + toSend.toString());
+
+    DatagramSocket socket = null;
+    byte[] message = ("127.0.0.1:" + transferConfig.getString("tcp.port") + " " + toSend.getFrom() + "\n").getBytes();
+    try {
+      socket = new DatagramSocket();
+      DatagramPacket packet = new DatagramPacket(message, message.length
+              ,InetAddress.getByName(transferConfig.getString("monitoring.host"))
+              ,transferConfig.getInt("monitoring.port"));
+      socket.send(packet);
+    }
+    catch (SocketException e){
+      e.printStackTrace();
+    }
+    catch (UnknownHostException e){
+      e.printStackTrace();
+    }
+    catch (IOException e){
+      e.printStackTrace();
+    }
+    finally {
+      if(socket != null && !socket.isClosed()){
+        socket.close();
+      }
     }
 
   }
