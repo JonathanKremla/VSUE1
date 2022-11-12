@@ -4,15 +4,16 @@ import dslab.mailbox.ClientCommunicator;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class DmtpListenerThread extends Thread{
+public class DmtpListenerThread extends Thread {
 
 
   private ServerSocket serverSocket;
   private boolean stopped = false;
-  private List<DmtpCommunicationThread> threadPool = new ArrayList<>();
+  private ExecutorService executor = Executors.newCachedThreadPool();
+  private ClientCommunicator communicator;
 
   public DmtpListenerThread(ServerSocket serverSocket) {
     this.serverSocket = serverSocket;
@@ -21,17 +22,13 @@ public class DmtpListenerThread extends Thread{
 
   public void run() {
     while (!stopped) {
-      ClientCommunicator communicator = new ClientCommunicator(serverSocket);
+      communicator = new ClientCommunicator(serverSocket);
       if (!communicator.establishConnection()) {
         break;
       }
-      var thread = new DmtpCommunicationThread(communicator);
-      thread.start();
-      threadPool.add(thread);
+      executor.execute(new DmtpCommunicationThread(communicator));
     }
-    for (var thread : threadPool) {
-      thread.stopThread();
-    }
+    executor.shutdownNow();
   }
 
   public void stopThread() {
@@ -48,7 +45,6 @@ public class DmtpListenerThread extends Thread{
         System.err.println("Error while closing server socket: " + e.getMessage());
       }
     }
-
   }
 }
 

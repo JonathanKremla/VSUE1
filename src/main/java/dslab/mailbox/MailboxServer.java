@@ -55,12 +55,14 @@ public class MailboxServer implements IMailboxServer, Runnable {
     System.out.println("Server is up!");
 
     try {
-      IShell shell = ComponentFactory.createMailboxShell("shell-mailbox", System.in, System.out);
+      IShell shell = ComponentFactory.createMailboxShell("shell-mailbox", in, out);
       shell.run();
     }
     catch (Exception e){
       e.printStackTrace();
+      shutdown();
     }
+    shutdown();
   }
 
   @Override
@@ -94,6 +96,7 @@ public class MailboxServer implements IMailboxServer, Runnable {
   public static void main(String[] args) throws Exception {
     IMailboxServer server = ComponentFactory.createMailboxServer(args[0], System.in, System.out);
     server.run();
+    System.out.println("Done");
   }
 }
 

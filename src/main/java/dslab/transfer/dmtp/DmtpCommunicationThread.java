@@ -7,7 +7,7 @@ import java.util.Objects;
 
 public class DmtpCommunicationThread extends Thread {
 
-  private ClientCommunicator communicator;
+  private final ClientCommunicator communicator;
   private boolean stopped = false;
   private final MessageDistributer messageDistributer = new MessageDistributer();
   private DmtpRequestHandler requestHandler;
@@ -19,10 +19,9 @@ public class DmtpCommunicationThread extends Thread {
 
   public void run() {
 
-    var senderThread = sender;
-    senderThread.start();
     requestHandler = new DmtpRequestHandler(messageDistributer);
     requestHandler.start();
+    sender.start();
     String request;
     communicator.println("ok DMTP");
     communicator.flush();

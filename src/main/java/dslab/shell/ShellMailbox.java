@@ -57,6 +57,5 @@ public class ShellMailbox implements IShell,Runnable{
      * caught inside the Shell run method, causing the loop to break gracefully.
      */
     System.out.println("Exiting the shell, bye!");
-
   }
 }

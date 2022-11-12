@@ -13,6 +13,8 @@ import dslab.util.Config;
 
 public class TransferServer implements ITransferServer, Runnable {
 
+    private InputStream in;
+    private PrintStream out;
     private final int tcpDmtpPort;
     private ServerSocket dmtpSocket;
     private DmtpListenerThread dmtpListenerThread;
@@ -26,6 +28,8 @@ public class TransferServer implements ITransferServer, Runnable {
      * @param out the output stream to write console output to
      */
     public TransferServer(String componentId, Config config, InputStream in, PrintStream out) {
+        this.in = in;
+        this.out = out;
         tcpDmtpPort = config.getInt("tcp.port");
     }
 
@@ -35,12 +39,14 @@ public class TransferServer implements ITransferServer, Runnable {
         System.out.println("Server is up!");
 
         try {
-            IShell shell = ComponentFactory.createMailboxShell("shell-transfer", System.in, System.out);
+            IShell shell = ComponentFactory.createMailboxShell("shell-transfer", in, out);
             shell.run();
         }
         catch (Exception e){
             e.printStackTrace();
+            shutdown();
         }
+        shutdown();
     }
 
     @Override

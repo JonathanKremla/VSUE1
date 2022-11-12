@@ -90,22 +90,22 @@ public class MessageDistributer {
       logger.info("sendMail: " + email.toString());
       mailboxOut.println("begin");
       mailboxOut.flush();
-      System.err.print(mailboxIn.readLine());
+      logger.info(mailboxIn.readLine());
       mailboxOut.println("to " + email.getTo());
       mailboxOut.flush();
-      System.err.println(mailboxIn.readLine());
+      logger.info(mailboxIn.readLine());
       mailboxOut.println("from " + email.getFrom());
       mailboxOut.flush();
-      System.err.println(mailboxIn.readLine());
+      logger.info(mailboxIn.readLine());
       mailboxOut.println("subject " + email.getSubject());
       mailboxOut.flush();
-      System.err.println(mailboxIn.readLine());
+      logger.info(mailboxIn.readLine());
       mailboxOut.println("data " + email.getData());
       mailboxOut.flush();
-      System.err.println(mailboxIn.readLine());
+      logger.info(mailboxIn.readLine());
       mailboxOut.println("send");
       mailboxOut.flush();
-      System.err.println(mailboxIn.readLine());
+      logger.info(mailboxIn.readLine());
       mailboxOut.close();
       mailboxIn.close();
     } catch (IOException e) {

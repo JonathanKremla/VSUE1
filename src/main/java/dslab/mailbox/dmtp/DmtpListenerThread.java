@@ -4,41 +4,39 @@ import dslab.mailbox.ClientCommunicator;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class DmtpListenerThread extends Thread{
+public class DmtpListenerThread extends Thread {
   private ServerSocket serverSocket;
   private String users;
   private String domain;
   private boolean stopped = false;
-  private List<DmtpCommunicationThread> threadPool = new ArrayList<>();
+  private ClientCommunicator communicator;
+  private ExecutorService executor = Executors.newCachedThreadPool();
 
   public DmtpListenerThread(ServerSocket serverSocket, String domain, String userConfig) {
     this.serverSocket = serverSocket;
     this.users = userConfig;
     this.domain = domain;
+    Thread.currentThread().setName("Listener Thread");
   }
 
   public void run() {
     while (!stopped) {
-      ClientCommunicator communicator = new ClientCommunicator(serverSocket);
-      if(!communicator.establishConnection()) break;
-      var thread = new DmtpCommunicationThread(communicator, users, domain);
-      thread.start();
-      threadPool.add(thread);
+      communicator = new ClientCommunicator(serverSocket);
+      if (!communicator.establishConnection()) {
+        break;
+      }
+      executor.execute(new DmtpCommunicationThread(communicator, users, domain));
     }
-    for(var thread : threadPool){
-      thread.stopThread();
-    }
+    executor.shutdownNow();
   }
 
-  public void stopThread(){
+  public void stopThread() {
     close();
     this.stopped = true;
+    executor.shutdownNow();
   }
 
 
@@ -50,6 +48,5 @@ public class DmtpListenerThread extends Thread{
         System.err.println("Error while closing server socket: " + e.getMessage());
       }
     }
-
   }
 }

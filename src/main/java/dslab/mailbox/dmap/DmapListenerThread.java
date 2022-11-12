@@ -1,13 +1,15 @@
 package dslab.mailbox.dmap;
 
 import dslab.mailbox.ClientCommunicator;
-import dslab.mailbox.dmtp.DmtpCommunicationThread;
+import dslab.util.ThreadFactoryImpl;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.SocketException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.Logger;
 
 public class DmapListenerThread extends Thread {
 
@@ -15,8 +17,8 @@ public class DmapListenerThread extends Thread {
   private String users;
   private String domain;
   private boolean stopped = false;
-  private ClientCommunicator communicator;
-  private List<DmapCommunicationThread> threadPool = new ArrayList<>();
+  private ExecutorService executor = Executors.newCachedThreadPool();
+  private Logger logger = Logger.getLogger(this.getClass().getName());
 
   public DmapListenerThread(ServerSocket serverSocket, String domain, String userConfig) {
     this.serverSocket = serverSocket;
@@ -26,19 +28,18 @@ public class DmapListenerThread extends Thread {
 
   public void run() {
     while (!stopped) {
-      communicator = new ClientCommunicator(serverSocket);
-      if(!communicator.establishConnection()) break;
-      var thread = new DmapCommunicationThread(communicator, users, domain);
-      thread.start();
-      threadPool.add(thread);
+      ClientCommunicator communicator = new ClientCommunicator(serverSocket);
+      if (!communicator.establishConnection()) {
+        break;
+      }
+      executor.execute(new DmapCommunicationThread(communicator, users, domain));
     }
-    for(var thread : threadPool){
-      thread.stopThread();
-    }
+    executor.shutdown();
   }
 
-  public void stopThread(){
+  public void stopThread() {
     close();
+    executor.shutdownNow();
     this.stopped = true;
   }
 

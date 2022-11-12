@@ -5,7 +5,7 @@ import dslab.mailbox.ClientCommunicator;
 import java.util.List;
 import java.util.Objects;
 
-public class DmapCommunicationThread extends Thread {
+public class DmapCommunicationThread implements Runnable {
 
   private ClientCommunicator communicator;
   private String users;
@@ -35,10 +35,5 @@ public class DmapCommunicationThread extends Thread {
     communicator.println("ok bye");
     communicator.flush();
     communicator.close();
-  }
-
-  public void stopThread(){
-    communicator.close();
-    this.stopped = true;
   }
 }

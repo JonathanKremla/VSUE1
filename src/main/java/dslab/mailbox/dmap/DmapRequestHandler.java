@@ -1,6 +1,6 @@
 package dslab.mailbox.dmap;
 
-import dslab.mailbox.Email;
+import dslab.util.datastructures.Email;
 import dslab.mailbox.MessageStorage;
 import dslab.util.Config;
 
