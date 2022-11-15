@@ -1,17 +1,24 @@
 package dslab.monitoring.udp;
 
 import dslab.monitoring.UsageStaticsticsStorage;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.util.logging.Logger;
 
-public class UdpListenerThread extends Thread{
-  private DatagramSocket datagramSocket;
-  private Logger logger = Logger.getLogger(this.getClass().getName());
+/**
+ * The Thread which handles the UDP Packages between this Monitoring Server and a
+ * Client (Transfer Server).
+ * <p>
+ * This Threads Lifespan is as long as the Applications Lifespan
+ */
+public class UdpListenerThread extends Thread {
+  private final DatagramSocket datagramSocket;
+  private final Log LOG = LogFactory.getLog(UdpListenerThread.class);
   private boolean stopped = false;
 
   public UdpListenerThread(DatagramSocket datagramSocket) {
@@ -35,18 +42,18 @@ public class UdpListenerThread extends Thread{
         // wait for incoming packets from client
         datagramSocket.receive(packet);
         // get the data from the packet
-        String request = new String(packet.getData());
+        String request = new String(packet.getData()).trim();
 
-        logger.info("Received request-packet from client: " + request);
+        LOG.info("Received request-packet from client: " + request);
 
-        if(!UsageStaticsticsStorage.add(request)){
-          logger.info("Nothing saved request is invalid format");
+        if (!UsageStaticsticsStorage.add(request)) {
+          LOG.info("Nothing saved request is invalid format");
         }
       }
 
     } catch (SocketException e) {
       // when the socket is closed, the send or receive methods of the DatagramSocket will throw a SocketException
-      logger.info("SocketException while waiting for/handling packets: " + e.getMessage());
+      LOG.info("SocketException while waiting for/handling packets: " + e.getMessage());
       return;
     } catch (IOException e) {
       // other exceptions should be handled correctly in your implementation
@@ -60,9 +67,9 @@ public class UdpListenerThread extends Thread{
   }
 
 
-  public void stopThread(){
+  public void stopThread() {
     this.stopped = true;
-    if(!datagramSocket.isClosed()) {
+    if (!datagramSocket.isClosed()) {
       datagramSocket.close();
     }
   }

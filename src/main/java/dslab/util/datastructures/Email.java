@@ -12,7 +12,8 @@ public class Email {
   private String data;
   private List<String> domains;
 
-  public Email(){}
+  public Email() {
+  }
 
   public Email(String from, String to, String subject, String data) {
     this.from = from;
@@ -41,12 +42,16 @@ public class Email {
     return subject;
   }
 
+  public void setSubject(String subject) {
+    this.subject = subject;
+  }
+
   public List<String> getDomains() {
     return domains;
   }
 
-  public void setSubject(String subject) {
-    this.subject = subject;
+  public void setDomains(List<String> domains) {
+    this.domains = domains;
   }
 
   public String getData() {
@@ -56,11 +61,6 @@ public class Email {
   public void setData(String data) {
     this.data = data;
   }
-
-  public void setDomains(List<String> domains){
-    this.domains=domains;
-  }
-
 
   @Override
   public String toString() {

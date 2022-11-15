@@ -7,7 +7,13 @@ import at.ac.tuwien.dsg.orvell.annotation.Command;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-public class BasicShell implements IShell,Runnable{
+/**
+ * This Class implements a Basic Shell for {@link dslab.transfer.TransferServer}
+ * and {@link dslab.mailbox.MailboxServer} it is used to block the main Threads
+ * of these Servers and listens for Commands.
+ * it only implements the Shutdown command
+ */
+public class BasicShell implements IShell, Runnable {
   private Shell shell;
 
   public BasicShell(String componentId, InputStream inputStream, PrintStream outputStream) {

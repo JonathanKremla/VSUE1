@@ -1,8 +1,8 @@
 package dslab.mailbox.dmtp;
 
-import dslab.util.datastructures.Email;
 import dslab.mailbox.MessageStorage;
 import dslab.util.Config;
+import dslab.util.datastructures.Email;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,6 +10,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * handles all DMTP requests, a request being one command sent from a Client,
+ * for Mailbox Server and provides the appropriate response(s)
+ */
 public class DmtpRequestHandler {
 
   private final String domain;
@@ -25,6 +29,12 @@ public class DmtpRequestHandler {
     userList = new ArrayList<>(this.userConfig.listKeys());
   }
 
+  /**
+   * handles one request
+   *
+   * @param request request to handle
+   * @return the appropriate answer to the request
+   */
   public String handleRequest(String request) {
     switch (request.split(" ")[0]) {
       case "begin":
@@ -45,10 +55,15 @@ public class DmtpRequestHandler {
   }
 
   private String parseTo(String request) {
-    if(!transferBegan) return "invalid request";
+    if (!transferBegan) {
+      return "invalid request";
+    }
+
+    //remove "to"
+    request = request.substring(2);
     //filters out all emails with other domain than this Mailbox
-    var recipientList = Arrays.stream(request.split(" "))
-            .filter(s -> !s.equals(",") && !s.equals("to"))
+    var recipientList = Arrays.stream(request.split(","))
+            .map(String::trim)
             .filter(s -> s.matches("(.*)@" + domain))
             .collect(Collectors.toList());
     if (recipientList.stream().findAny().isEmpty()) {
@@ -63,14 +78,16 @@ public class DmtpRequestHandler {
             + (Objects.equals(emails, "") ? "" : " , ")
             + email));
 
-    for(String recipient : recipientList){
+    for (String recipient : recipientList) {
       this.recipients.add(recipient.split("@")[0]);
     }
     return "ok " + recipientList.size();
   }
 
   private String parseFrom(String request) {
-    if(!transferBegan) return "invalid request";
+    if (!transferBegan) {
+      return "invalid request";
+    }
     var splitRequest = request.split(" ");
     if (splitRequest.length > 2) {
       return "error only one sender possible";
@@ -85,25 +102,31 @@ public class DmtpRequestHandler {
   }
 
   private String parseSubject(String request) {
-    if(!transferBegan) return "invalid request";
+    if (!transferBegan) {
+      return "invalid request";
+    }
     receivedEmail.setSubject(request.substring(7).trim());
     return "ok";
   }
 
   private String parseData(String request) {
-    if(!transferBegan) return "invalid request";
+    if (!transferBegan) {
+      return "invalid request";
+    }
     receivedEmail.setData(request.substring(4).trim());
     return "ok";
 
   }
 
   private String parseSend() {
-    if(!transferBegan) return "invalid request";
-    if(!allEmailAttributesSet()){
+    if (!transferBegan) {
+      return "invalid request";
+    }
+    if (!allEmailAttributesSet()) {
       return "error some attributes of email not set";
     }
     this.transferBegan = false;
-    for(String recipient : recipients ) {
+    for (String recipient : recipients) {
       MessageStorage.put(recipient, receivedEmail);
     }
     this.receivedEmail = new Email();
@@ -118,11 +141,11 @@ public class DmtpRequestHandler {
             receivedEmail.getData() != null;
   }
 
-  private String parseBegin(String request){
-    if(request.split(" ").length > 1){
+  private String parseBegin(String request) {
+    if (request.split(" ").length > 1) {
       return "error invalid request";
     }
-    if(transferBegan){
+    if (transferBegan) {
       return "error invalid request";
     }
     transferBegan = true;

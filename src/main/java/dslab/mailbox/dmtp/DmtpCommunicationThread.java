@@ -1,30 +1,38 @@
 package dslab.mailbox.dmtp;
 
 import dslab.mailbox.ClientCommunicator;
-import java.util.List;
+
 import java.util.Objects;
 
-public class DmtpCommunicationThread extends Thread{
+/**
+ * The Thread which handles the DMTP Communication between this Mailbox Server and a
+ * connected Client. This Thread is only executed vie {@link java.util.concurrent.ExecutorService}
+ * therefore it only implements {@link Runnable} not {@link Thread}
+ * <p>
+ * This is a short lived Thread, only handling the Communication between one Connected Client and
+ * then terminated.
+ */
+public class DmtpCommunicationThread extends Thread {
 
   private ClientCommunicator communicator;
   private String users;
   private String domain;
   private boolean stopped = false;
 
-  public DmtpCommunicationThread(ClientCommunicator communicator, String users, String domain){
+  public DmtpCommunicationThread(ClientCommunicator communicator, String users, String domain) {
     this.communicator = communicator;
     this.users = users;
     this.domain = domain;
   }
 
-  public void run(){
+  public void run() {
 
     DmtpRequestHandler requestHandler = new DmtpRequestHandler(domain, users);
     String request;
     communicator.println("ok DMTP");
     communicator.flush();
     // read client requests
-    while (!stopped && (request = communicator.readLine()) != null && !Objects.equals(request , "quit")) {
+    while (!stopped && (request = communicator.readLine()) != null && !Objects.equals(request, "quit")) {
       String response = requestHandler.handleRequest(request);
       communicator.println(response);
       communicator.flush();
@@ -34,7 +42,7 @@ public class DmtpCommunicationThread extends Thread{
     communicator.close();
   }
 
-  public void stopThread(){
+  public void stopThread() {
     communicator.close();
     this.stopped = true;
   }

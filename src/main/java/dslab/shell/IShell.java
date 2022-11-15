@@ -1,6 +1,6 @@
 package dslab.shell;
 
-public interface IShell extends Runnable{
+public interface IShell extends Runnable {
 
   /**
    * Performs a shutdown and a release of all resources.

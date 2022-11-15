@@ -1,29 +1,32 @@
 package dslab.mailbox.dmap;
 
 import dslab.mailbox.ClientCommunicator;
-import dslab.util.ThreadFactoryImpl;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Logger;
 
+/**
+ * Implementation of the Thread which listens for new DMAP connections,
+ * establishes new Connections and then passes the Communication to the {@link DmapCommunicationThread}
+ * and resumes listening.
+ *
+ * This Threads Lifespan is as long as the Applications Lifespan
+ */
 public class DmapListenerThread extends Thread {
 
-  private ServerSocket serverSocket;
-  private String users;
-  private String domain;
+  private final ServerSocket serverSocket;
+  private final String users;
+  private final ExecutorService executor = Executors.newCachedThreadPool();
+  private final Log LOG = LogFactory.getLog(DmapListenerThread.class);
   private boolean stopped = false;
-  private ExecutorService executor = Executors.newCachedThreadPool();
-  private Logger logger = Logger.getLogger(this.getClass().getName());
 
-  public DmapListenerThread(ServerSocket serverSocket, String domain, String userConfig) {
+  public DmapListenerThread(ServerSocket serverSocket, String userConfig) {
     this.serverSocket = serverSocket;
     this.users = userConfig;
-    this.domain = domain;
   }
 
   public void run() {
@@ -32,7 +35,7 @@ public class DmapListenerThread extends Thread {
       if (!communicator.establishConnection()) {
         break;
       }
-      executor.execute(new DmapCommunicationThread(communicator, users, domain));
+      executor.execute(new DmapCommunicationThread(communicator, users));
     }
     executor.shutdown();
   }
@@ -49,7 +52,7 @@ public class DmapListenerThread extends Thread {
       try {
         serverSocket.close();
       } catch (IOException e) {
-        System.err.println("Error while closing server socket: " + e.getMessage());
+        LOG.error("Error while closing server socket: " + e.getMessage());
       }
     }
 

@@ -1,60 +1,57 @@
 package dslab.mailbox.dmap;
 
-import dslab.util.datastructures.Email;
 import dslab.mailbox.MessageStorage;
 import dslab.util.Config;
+import dslab.util.datastructures.Email;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 /**
- * handles clients request on one thread
+ * handles all DMAP requests, a request being one command sent from a Client,
+ * for Mailbox Server and provides the appropriate response(s)
  */
 public class DmapRequestHandler {
   //map containing the responses(can be multiple or single) for a specific request
-  private HashMap<String, List<String>> responseMap = new HashMap<>();
-  private Config config;
-  private String domain;
+  private final HashMap<String, List<String>> responseMap = new HashMap<>();
+  private final Config config;
   private String currentUser;
 
-  public DmapRequestHandler(String userConfig, String domain) {
-    this.domain = domain;
+  public DmapRequestHandler(String userConfig) {
     this.config = new Config(userConfig);
     fillResponseMap();
   }
 
   /**
    * handles a specific request
+   *
    * @param request request to handle
    * @return List of responses to be sent to the client
    */
   public List<String> handle(String request) {
-    //TODO throw exceptions
     fillResponseMap();
     if (responseMap.containsKey(request)) {
-      var answer =  responseMap.get(request);
+      var answer = responseMap.get(request);
       handleLogicalRequests(request);
       return answer;
     }
-    //ToDO change to fitting exception
     List<String> invalidRequest = new ArrayList<>();
     invalidRequest.add("error");
     return invalidRequest;
   }
 
-  private void handleLogicalRequests(String key){
-    if(currentUser == null){
-      if(key.startsWith("login")){
+  private void handleLogicalRequests(String key) {
+    if (currentUser == null) {
+      if (key.startsWith("login")) {
         currentUser = key.split(" ")[1];
         responseMap.remove("login " + currentUser + " " + config.getString(currentUser));
       }
-    }
-    else{
-      if(key.startsWith("delete")){
+    } else {
+      if (key.startsWith("delete")) {
         deleteMessage(Integer.parseInt(key.split(" ")[1]));
       }
-      if(key.startsWith("logout")){
+      if (key.startsWith("logout")) {
         logoutUser();
       }
     }
@@ -62,7 +59,7 @@ public class DmapRequestHandler {
   }
 
   private void fillResponseMap() {
-    if(currentUser == null) {
+    if (currentUser == null) {
       loginResponse();
     }
     if (currentUser != null) {
@@ -125,14 +122,14 @@ public class DmapRequestHandler {
     responseMap.put("logout", responseList);
   }
 
-  private void deleteMessage(int id){
+  private void deleteMessage(int id) {
     responseMap.remove("list");
     responseMap.remove("show " + id);
     responseMap.remove("delete " + id);
     MessageStorage.remove(currentUser, id);
   }
 
-  private void logoutUser(){
+  private void logoutUser() {
     currentUser = null;
     responseMap.clear();
     fillResponseMap();

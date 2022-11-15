@@ -3,8 +3,9 @@ package dslab.transfer;
 import dslab.util.Config;
 import dslab.util.datastructures.DataQueue;
 import dslab.util.datastructures.Email;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-import javax.xml.crypto.Data;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -16,41 +17,63 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.MissingResourceException;
-import java.util.logging.Logger;
 
+/**
+ * This Class implements the Producer-Consumer Class receiving Messages from the {@link dslab.transfer.dmtp.DmtpRequestHandler}
+ * and passing them forward to the appropriate Mailbox Server and Monitoring Server.
+ * <p>
+ * The Producer Class {@link dslab.transfer.dmtp.DmtpRequestHandler} calls the distribute() function after finishing
+ * producing, while the Sender thread in {@link dslab.transfer.dmtp.DmtpListenerThread} calls the forward() function
+ * which then puts the Sender thread in a loop, connecting to the mailbox Servers and Monitoring Server and sending
+ * the Message.
+ * distribute() puts the message in the {@link DataQueue} queue while it is not full, forward() extracts messages out of the
+ * queue while it is not empty. If the Queue is full/empty respectively the Thread blocks and waits for the queue to
+ * be the desired state (not full, not empty)
+ * </p>
+ */
 public class MessageDistributer {
-  private DataQueue queue = new DataQueue(3);
-  private Socket mailboxSocket;
+  private final DataQueue queue = new DataQueue(3);
+  private final Config domainConfig = new Config("domains");
+  private final Log LOG = LogFactory.getLog(MessageDistributer.class);
   private PrintWriter mailboxOut;
   private BufferedReader mailboxIn;
-  private Config domainConfig = new Config("domains");
   private Config transferConfig;
-  private boolean stopped = false;
-  private final Logger logger = Logger.getLogger(MessageDistributer.class.getName());
 
-  public void setTransferConfig(Config transferConfig){
+  public void setTransferConfig(Config transferConfig) {
     this.transferConfig = transferConfig;
   }
 
+  /**
+   * Is called by the Producer Class {@link dslab.transfer.dmtp.DmtpRequestHandler} with a freshly produced message.
+   * If the Queue is not full the message is saved to the Queue and the producer Thread can return to producing Messages.
+   * If the Queue is full the producer Thread is blocked until the Queue is not full any more (see forward method)
+   *
+   * @param email message to send
+   * @throws InterruptedException if the Thread gets interrupted during wait
+   */
   public void distribute(Email email) throws InterruptedException {
-    logger.info("distribute: " + email.toString());
+    LOG.info("distribute: " + email.toString());
     while (queue.isFull()) {
       try {
         queue.waitOnFull();
       } catch (InterruptedException e) {
         break;
       }
-      if (stopped) {
-        break;
-      }
     }
     queue.add(email);
-    logger.info("in distribute list after fill: " + queue.peek());
+    LOG.info("in distribute list after fill: " + queue.peek());
     queue.notifyAllForEmpty();
   }
 
+  /**
+   * Is called by the Sender Thread in {@link dslab.transfer.dmtp.DmtpListenerThread}
+   * It loops endlessly(until thread is terminated) to process the Queue {@link DataQueue}
+   * If the Queue is empty the Thread waits for new Messages to be produced (see distribute method)
+   * If the Queue is not empty it establishes Connections to the required Servers and sends the Message
+   * to the appropriate recipients
+   */
   public void forward() {
-    while (!stopped) {
+    while (true) {
       if (queue.isEmpty()) {
         try {
           queue.waitOnEmpty();
@@ -58,23 +81,19 @@ public class MessageDistributer {
           break;
         }
       }
-      if (stopped) {
-        break;
-      }
-      logger.info("forward after wait: " + queue.peek());
+      LOG.info("forward after wait: " + queue.peek());
       Email toSend = queue.poll();
       queue.notifyAllForFull();
-      logger.info("state of Message Distributer :" + toSend);
+      LOG.info("state of Message Distributer :" + toSend);
       for (String domain : toSend.getDomains()) {
         if (!establishClientConnection(domain)) {
           sendFailureMail(toSend.getFrom());
-        }
-        else {
+        } else {
           sendStatistics(toSend);
           sendMail(toSend);
         }
       }
-      logger.info("finished sending all emails");
+      LOG.info("finished sending all emails");
     }
   }
 
@@ -86,8 +105,8 @@ public class MessageDistributer {
       return false;
     }
     try {
-      logger.info("establishConnection: " + domain);
-      mailboxSocket = new Socket("localhost", ip);
+      LOG.info("establishConnection: " + domain);
+      Socket mailboxSocket = new Socket("localhost", ip);
       mailboxOut = new PrintWriter(mailboxSocket.getOutputStream());
       mailboxIn = new BufferedReader(new InputStreamReader(mailboxSocket.getInputStream()));
     } catch (IOException e) {
@@ -99,25 +118,25 @@ public class MessageDistributer {
 
   private void sendMail(Email email) {
     try {
-      logger.info("sendMail: " + email.toString());
+      LOG.info("sendMail: " + email.toString());
       mailboxOut.println("begin");
       mailboxOut.flush();
-      logger.info(mailboxIn.readLine());
+      LOG.info(mailboxIn.readLine());
       mailboxOut.println("to " + email.getTo());
       mailboxOut.flush();
-      logger.info(mailboxIn.readLine());
+      LOG.info(mailboxIn.readLine());
       mailboxOut.println("from " + email.getFrom());
       mailboxOut.flush();
-      logger.info(mailboxIn.readLine());
+      LOG.info(mailboxIn.readLine());
       mailboxOut.println("subject " + email.getSubject());
       mailboxOut.flush();
-      logger.info(mailboxIn.readLine());
+      LOG.info(mailboxIn.readLine());
       mailboxOut.println("data " + email.getData());
       mailboxOut.flush();
-      logger.info(mailboxIn.readLine());
+      LOG.info(mailboxIn.readLine());
       mailboxOut.println("send");
       mailboxOut.flush();
-      logger.info(mailboxIn.readLine());
+      LOG.info(mailboxIn.readLine());
       mailboxOut.close();
       mailboxIn.close();
     } catch (IOException e) {
@@ -126,53 +145,34 @@ public class MessageDistributer {
 
   }
 
-  private void sendStatistics(Email toSend){
-    logger.info("sendStatistics: " + toSend.toString());
+  private void sendStatistics(Email toSend) {
+    LOG.info("sendStatistics: " + toSend.toString());
 
     DatagramSocket socket = null;
     byte[] message = ("127.0.0.1:" + transferConfig.getString("tcp.port") + " " + toSend.getFrom() + "\n").getBytes();
     try {
       socket = new DatagramSocket();
       DatagramPacket packet = new DatagramPacket(message, message.length
-              ,InetAddress.getByName(transferConfig.getString("monitoring.host"))
-              ,transferConfig.getInt("monitoring.port"));
+              , InetAddress.getByName(transferConfig.getString("monitoring.host"))
+              , transferConfig.getInt("monitoring.port"));
       socket.send(packet);
-    }
-    catch (SocketException e){
+    } catch (SocketException e) {
       e.printStackTrace();
-    }
-    catch (UnknownHostException e){
+    } catch (UnknownHostException e) {
       e.printStackTrace();
-    }
-    catch (IOException e){
+    } catch (IOException e) {
       e.printStackTrace();
-    }
-    finally {
-      if(socket != null && !socket.isClosed()){
+    } finally {
+      if (socket != null && !socket.isClosed()) {
         socket.close();
       }
     }
 
   }
 
-  public void stopThread() {
-    logger.info("stopThread()");
-    this.stopped = true;
-    queue.notifyAllForFull();
-    queue.notifyAllForEmpty();
-    try {
-      mailboxSocket.close();
-      mailboxIn.close();
-      mailboxOut.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
   private void sendFailureMail(String from) {
     String domain = from.split("@")[1];
-    if(establishClientConnection(domain)) {
-      //TODO change maybe
+    if (establishClientConnection(domain)) {
       sendMail(new Email("mailer@[127.0.0.1]", from, "Failed to send Email", "Failed to send Email"));
     }
 

@@ -2,20 +2,29 @@ package dslab.transfer.dmtp;
 
 import dslab.mailbox.ClientCommunicator;
 import dslab.util.Config;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Implementation of the Thread which listens for new DMTP connections,
+ * establishes new Connections and then passes the Communication to the {@link DmtpCommunicationThread}
+ * and resumes listening.
+ * <p>
+ * This Threads Lifespan is as long as the Applications Lifespan
+ */
 public class DmtpListenerThread extends Thread {
 
 
-  private ServerSocket serverSocket;
+  private final ServerSocket serverSocket;
+  private final ExecutorService executor = Executors.newCachedThreadPool();
+  private final Config transferConfig;
+  private final Log LOG = LogFactory.getLog(DmtpListenerThread.class);
   private boolean stopped = false;
-  private ExecutorService executor = Executors.newCachedThreadPool();
-  private ClientCommunicator communicator;
-  private Config transferConfig;
 
   public DmtpListenerThread(ServerSocket serverSocket, Config transferConfig) {
     this.serverSocket = serverSocket;
@@ -25,7 +34,7 @@ public class DmtpListenerThread extends Thread {
 
   public void run() {
     while (!stopped) {
-      communicator = new ClientCommunicator(serverSocket);
+      ClientCommunicator communicator = new ClientCommunicator(serverSocket);
       if (!communicator.establishConnection()) {
         break;
       }
@@ -45,7 +54,7 @@ public class DmtpListenerThread extends Thread {
       try {
         serverSocket.close();
       } catch (IOException e) {
-        System.err.println("Error while closing server socket: " + e.getMessage());
+        LOG.error("Error while closing server socket: " + e.getMessage());
       }
     }
   }

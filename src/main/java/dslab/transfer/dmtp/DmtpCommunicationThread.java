@@ -6,12 +6,23 @@ import dslab.util.Config;
 
 import java.util.Objects;
 
+/**
+ * The Thread which handles the DMTP Communication between this Transfer Server and a
+ * connected Client. This Thread is only executed vie {@link java.util.concurrent.ExecutorService}
+ * therefore it only implements {@link Runnable} not {@link Thread}
+ * <p>
+ * This is a short-lived Thread, only handling the Communication between one Connected Client and
+ * then terminates.
+ */
 public class DmtpCommunicationThread extends Thread {
 
   private final ClientCommunicator communicator;
-  private boolean stopped = false;
   private final MessageDistributer messageDistributer = new MessageDistributer();
-  private DmtpRequestHandler requestHandler;
+  //Consumer
+  Thread sender = new Thread(() -> {
+    Thread.currentThread().setName("senderThread");
+    messageDistributer.forward();
+  });
 
   public DmtpCommunicationThread(ClientCommunicator communicator, Config transferConfig) {
     this.communicator = communicator;
@@ -20,14 +31,16 @@ public class DmtpCommunicationThread extends Thread {
   }
 
   public void run() {
-
-    requestHandler = new DmtpRequestHandler(messageDistributer);
+    //Producer
+    DmtpRequestHandler requestHandler = new DmtpRequestHandler(messageDistributer);
     requestHandler.start();
+    //Consumer
     sender.start();
     String request;
     communicator.println("ok DMTP");
     communicator.flush();
     // read client requests
+    boolean stopped = false;
     while (!stopped && (request = communicator.readLine()) != null && !Objects.equals(request, "quit")) {
       String response;
       response = requestHandler.handleRequest(request);
@@ -38,23 +51,6 @@ public class DmtpCommunicationThread extends Thread {
     communicator.flush();
     communicator.close();
   }
-
-  public void stopThread() {
-    communicator.close();
-    try {
-      requestHandler.stopThread();
-    }
-    catch (NullPointerException ignored){
-      //happens if no request was sent to server => server got shutdown
-      //before any connections were established
-    }
-    this.stopped = true;
-  }
-
-  Thread sender = new Thread(() -> {
-    Thread.currentThread().setName("senderThread");
-    messageDistributer.forward();
-  });
 
 
 }

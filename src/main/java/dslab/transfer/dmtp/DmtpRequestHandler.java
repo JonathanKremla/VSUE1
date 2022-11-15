@@ -1,23 +1,30 @@
 package dslab.transfer.dmtp;
 
-import dslab.util.datastructures.Email;
 import dslab.transfer.MessageDistributer;
+import dslab.util.datastructures.Email;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * handles all DMTP requests, a request being one command sent from a Client,
+ * for Transfer Server and provides the appropriate response(s)
+ * <p>
+ * It also forwards the received messages to the {@link MessageDistributer  }
+ */
 public class DmtpRequestHandler extends Thread {
 
+  private final MessageDistributer messageDistributer;
+  private final Log LOG = LogFactory.getLog(DmtpRequestHandler.class);
   private Email receivedEmail = new Email();
   private boolean transferBegan = false;
-  private final MessageDistributer messageDistributer;
-  private final Logger logger = Logger.getLogger(this.getClass().getName());
 
-  public DmtpRequestHandler(MessageDistributer messageDistributer){
+  public DmtpRequestHandler(MessageDistributer messageDistributer) {
     this.messageDistributer = messageDistributer;
     Thread.currentThread().setName("DmtpRequestHandlerThread");
   }
@@ -45,8 +52,10 @@ public class DmtpRequestHandler extends Thread {
     if (!transferBegan) {
       return "error invalid request";
     }
-    var recipients = Arrays.stream(request.split(" "))
-            .filter(s -> !s.equals(",") && !s.equals("to"))
+    //remove "to"
+    request = request.substring(2);
+    var recipients = Arrays.stream(request.split(","))
+            .map(String::trim)
             .collect(Collectors.toList());
 
     receivedEmail.setTo(recipients.stream()
@@ -97,7 +106,7 @@ public class DmtpRequestHandler extends Thread {
   }
 
   private String parseSend() {
-    logger.info("parseSend");
+    LOG.info("parseSend");
     if (!transferBegan) {
       return "error";
     }
@@ -105,7 +114,7 @@ public class DmtpRequestHandler extends Thread {
       return "error";
     }
     try {
-      logger.info("call MessageDistributer: " + receivedEmail.toString());
+      LOG.info("call MessageDistributer: " + receivedEmail.toString());
       messageDistributer.distribute(receivedEmail);
     } catch (InterruptedException e) {
       e.printStackTrace();
@@ -131,10 +140,6 @@ public class DmtpRequestHandler extends Thread {
     }
     transferBegan = true;
     return "ok";
-  }
-
-  public void stopThread(){
-    messageDistributer.stopThread();
   }
 
 }

@@ -8,11 +8,19 @@ import dslab.monitoring.MonitoringServer;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-public class MonitoringShell implements IShell, Runnable{
+/**
+ * Shell for {@link MonitoringServer} it is used to block the main Thread
+ * and listens for Commands sent over the Command line
+ * Available Commands:
+ * 'shutdown'
+ * 'addresses'
+ * 'servers'
+ */
+public class MonitoringShell implements IShell, Runnable {
   private Shell shell;
   private MonitoringServer server;
 
-  public MonitoringShell(MonitoringServer server, String componentId, InputStream inputStream, PrintStream outputStream){
+  public MonitoringShell(MonitoringServer server, String componentId, InputStream inputStream, PrintStream outputStream) {
     /*
      * First, create a new Shell instance and provide an InputStream to read from,
      * as well as an OutputStream to write to. If you want to test the application
@@ -40,16 +48,28 @@ public class MonitoringShell implements IShell, Runnable{
     throw new StopShellException();
   }
 
+  /**
+   * implements the addresses command
+   * Lists all addresses and the number of messages they have sent (aggregated over all servers).
+   * Example output:
+   * zaphod@univer.ze 12
+   * trillian@earth.planet 4
+   */
   @Command
-  public void addresses(){
+  public void addresses() {
     server.addresses();
   }
 
+  /**
+   * Lists all servers and the number of messages sent over these servers.
+   * Example output:
+   * 10.0.0.1:1337 321
+   * 10.0.0.2:1338 512
+   */
   @Command
-  public void servers(){
+  public void servers() {
     server.servers();
   }
-
 
 
   @Override
