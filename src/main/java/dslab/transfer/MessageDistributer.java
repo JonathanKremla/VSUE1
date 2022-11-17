@@ -32,9 +32,10 @@ import java.util.MissingResourceException;
  * </p>
  */
 public class MessageDistributer {
-  private final DataQueue queue = new DataQueue(3);
+  private final DataQueue queue = new DataQueue(10);
   private final Config domainConfig = new Config("domains");
   private final Log LOG = LogFactory.getLog(MessageDistributer.class);
+  private Socket mailboxSocket;
   private PrintWriter mailboxOut;
   private BufferedReader mailboxIn;
   private Config transferConfig;
@@ -100,13 +101,24 @@ public class MessageDistributer {
   private boolean establishClientConnection(String domain) {
     int ip;
     try {
+      if (mailboxSocket != null &&
+              mailboxSocket.isConnected() &&
+              mailboxSocket.getPort() == domainConfig.getInt(domain)) {
+        return true;
+      }
       ip = domainConfig.getInt(domain);
     } catch (MissingResourceException e) {
       return false;
     }
     try {
       LOG.info("establishConnection: " + domain);
-      Socket mailboxSocket = new Socket("localhost", ip);
+      if(mailboxOut != null) {
+        mailboxOut.close();
+      }
+      if(mailboxIn != null) {
+        mailboxIn.close();
+      }
+      mailboxSocket = new Socket("localhost", ip);
       mailboxOut = new PrintWriter(mailboxSocket.getOutputStream());
       mailboxIn = new BufferedReader(new InputStreamReader(mailboxSocket.getInputStream()));
     } catch (IOException e) {
@@ -137,8 +149,6 @@ public class MessageDistributer {
       mailboxOut.println("send");
       mailboxOut.flush();
       LOG.info(mailboxIn.readLine());
-      mailboxOut.close();
-      mailboxIn.close();
     } catch (IOException e) {
       e.printStackTrace();
     }
