@@ -14,9 +14,9 @@ import java.util.List;
 public class MonitoringServer implements IMonitoringServer {
 
   DatagramSocket datagramSocket;
-  private InputStream in;
-  private PrintStream out;
-  private Config config;
+  private final InputStream in;
+  private final PrintStream out;
+  private final Config config;
   private UdpListenerThread udpListenerThread;
 
   /**

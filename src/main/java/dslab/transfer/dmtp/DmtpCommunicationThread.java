@@ -14,10 +14,11 @@ import java.util.Objects;
  * This is a short-lived Thread, only handling the Communication between one Connected Client and
  * then terminates.
  */
-public class DmtpCommunicationThread extends Thread {
+public class DmtpCommunicationThread implements Runnable {
 
   private final ClientCommunicator communicator;
   private final MessageDistributer messageDistributer = new MessageDistributer();
+
   //Consumer
   Thread sender = new Thread(() -> {
     Thread.currentThread().setName("senderThread");

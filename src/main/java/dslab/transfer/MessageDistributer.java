@@ -23,7 +23,7 @@ import java.util.MissingResourceException;
  * and passing them forward to the appropriate Mailbox Server and Monitoring Server.
  * <p>
  * The Producer Class {@link dslab.transfer.dmtp.DmtpRequestHandler} calls the distribute() function after finishing
- * producing, while the Sender thread in {@link dslab.transfer.dmtp.DmtpListenerThread} calls the forward() function
+ * producing, while the Sender thread in {@link dslab.transfer.dmtp.DmtpCommunicationThread} calls the forward() function
  * which then puts the Sender thread in a loop, connecting to the mailbox Servers and Monitoring Server and sending
  * the Message.
  * distribute() puts the message in the {@link DataQueue} queue while it is not full, forward() extracts messages out of the
@@ -66,7 +66,7 @@ public class MessageDistributer {
   }
 
   /**
-   * Is called by the Sender Thread in {@link dslab.transfer.dmtp.DmtpListenerThread}
+   * Is called by the Sender Thread in {@link dslab.transfer.dmtp.DmtpCommunicationThread}
    * It loops endlessly(until thread is terminated) to process the Queue {@link DataQueue}
    * If the Queue is empty the Thread waits for new Messages to be produced (see distribute method)
    * If the Queue is not empty it establishes Connections to the required Servers and sends the Message

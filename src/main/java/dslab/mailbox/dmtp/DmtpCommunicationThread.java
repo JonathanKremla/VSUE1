@@ -12,12 +12,11 @@ import java.util.Objects;
  * This is a short lived Thread, only handling the Communication between one Connected Client and
  * then terminated.
  */
-public class DmtpCommunicationThread extends Thread {
+public class DmtpCommunicationThread implements Runnable {
 
-  private ClientCommunicator communicator;
-  private String users;
-  private String domain;
-  private boolean stopped = false;
+  private final ClientCommunicator communicator;
+  private final String users;
+  private final String domain;
 
   public DmtpCommunicationThread(ClientCommunicator communicator, String users, String domain) {
     this.communicator = communicator;
@@ -32,7 +31,7 @@ public class DmtpCommunicationThread extends Thread {
     communicator.println("ok DMTP");
     communicator.flush();
     // read client requests
-    while (!stopped && (request = communicator.readLine()) != null && !Objects.equals(request, "quit")) {
+    while ((request = communicator.readLine()) != null && !Objects.equals(request, "quit")) {
       String response = requestHandler.handleRequest(request);
       communicator.println(response);
       communicator.flush();
@@ -40,10 +39,5 @@ public class DmtpCommunicationThread extends Thread {
     communicator.println("ok bye");
     communicator.flush();
     communicator.close();
-  }
-
-  public void stopThread() {
-    communicator.close();
-    this.stopped = true;
   }
 }
