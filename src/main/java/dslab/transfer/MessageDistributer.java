@@ -53,7 +53,6 @@ public class MessageDistributer {
    * @throws InterruptedException if the Thread gets interrupted during wait
    */
   public void distribute(Email email) throws InterruptedException {
-    LOG.info("distribute: " + email.toString());
     while (queue.isFull()) {
       try {
         queue.waitOnFull();
@@ -62,7 +61,6 @@ public class MessageDistributer {
       }
     }
     queue.add(email);
-    LOG.info("in distribute list after fill: " + queue.peek());
     queue.notifyAllForEmpty();
   }
 
@@ -82,10 +80,8 @@ public class MessageDistributer {
           break;
         }
       }
-      LOG.info("forward after wait: " + queue.peek());
       Email toSend = queue.poll();
       queue.notifyAllForFull();
-      LOG.info("state of Message Distributer :" + toSend);
       for (String domain : toSend.getDomains()) {
         if (!establishClientConnection(domain)) {
           sendFailureMail(toSend.getFrom());
@@ -94,7 +90,6 @@ public class MessageDistributer {
           sendMail(toSend);
         }
       }
-      LOG.info("finished sending all emails");
     }
   }
 
@@ -112,10 +107,10 @@ public class MessageDistributer {
     }
     try {
       LOG.info("establishConnection: " + domain);
-      if(mailboxOut != null) {
+      if (mailboxOut != null) {
         mailboxOut.close();
       }
-      if(mailboxIn != null) {
+      if (mailboxIn != null) {
         mailboxIn.close();
       }
       mailboxSocket = new Socket("localhost", ip);
@@ -129,30 +124,19 @@ public class MessageDistributer {
   }
 
   private void sendMail(Email email) {
-    try {
-      LOG.info("sendMail: " + email.toString());
-      mailboxOut.println("begin");
-      mailboxOut.flush();
-      LOG.info(mailboxIn.readLine());
-      mailboxOut.println("to " + email.getTo());
-      mailboxOut.flush();
-      LOG.info(mailboxIn.readLine());
-      mailboxOut.println("from " + email.getFrom());
-      mailboxOut.flush();
-      LOG.info(mailboxIn.readLine());
-      mailboxOut.println("subject " + email.getSubject());
-      mailboxOut.flush();
-      LOG.info(mailboxIn.readLine());
-      mailboxOut.println("data " + email.getData());
-      mailboxOut.flush();
-      LOG.info(mailboxIn.readLine());
-      mailboxOut.println("send");
-      mailboxOut.flush();
-      LOG.info(mailboxIn.readLine());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-
+    mailboxOut.println("begin");
+    mailboxOut.flush();
+    mailboxOut.println("to " + email.getTo());
+    mailboxOut.flush();
+    mailboxOut.println("from " + email.getFrom());
+    mailboxOut.flush();
+    mailboxOut.println("subject " + email.getSubject());
+    mailboxOut.flush();
+    mailboxOut.println("data " + email.getData());
+    mailboxOut.flush();
+    mailboxOut.println("send");
+    mailboxOut.flush();
+    LOG.info("Finished sending email");
   }
 
   private void sendStatistics(Email toSend) {
