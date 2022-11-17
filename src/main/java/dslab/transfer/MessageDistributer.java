@@ -14,8 +14,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.MissingResourceException;
 
 /**
@@ -125,15 +123,10 @@ public class MessageDistributer {
 
   private void sendMail(Email email) {
     mailboxOut.println("begin");
-    mailboxOut.flush();
     mailboxOut.println("to " + email.getTo());
-    mailboxOut.flush();
     mailboxOut.println("from " + email.getFrom());
-    mailboxOut.flush();
     mailboxOut.println("subject " + email.getSubject());
-    mailboxOut.flush();
     mailboxOut.println("data " + email.getData());
-    mailboxOut.flush();
     mailboxOut.println("send");
     mailboxOut.flush();
     LOG.info("Finished sending email");
@@ -143,19 +136,16 @@ public class MessageDistributer {
     LOG.info("sendStatistics: " + toSend.toString());
 
     DatagramSocket socket = null;
-    byte[] message = ("127.0.0.1:" + transferConfig.getString("tcp.port") + " " + toSend.getFrom() + "\n").getBytes();
+    byte[] message = (mailboxSocket.getInetAddress().getHostAddress() + ":"
+            + transferConfig.getString("tcp.port") + " " + toSend.getFrom() + "\n").getBytes();
     try {
       socket = new DatagramSocket();
       DatagramPacket packet = new DatagramPacket(message, message.length
               , InetAddress.getByName(transferConfig.getString("monitoring.host"))
               , transferConfig.getInt("monitoring.port"));
       socket.send(packet);
-    } catch (SocketException e) {
-      e.printStackTrace();
-    } catch (UnknownHostException e) {
-      e.printStackTrace();
     } catch (IOException e) {
-      e.printStackTrace();
+      LOG.error(e);
     } finally {
       if (socket != null && !socket.isClosed()) {
         socket.close();
@@ -167,7 +157,8 @@ public class MessageDistributer {
   private void sendFailureMail(String from) {
     String domain = from.split("@")[1];
     if (establishClientConnection(domain)) {
-      sendMail(new Email("mailer@[127.0.0.1]", from, "Failed to send Email", "Failed to send Email"));
+      sendMail(new Email("mailer@[" + mailboxSocket.getInetAddress().getHostAddress() + "]",
+              from, "Failed to send Email", "Failed to send Email"));
     }
 
   }

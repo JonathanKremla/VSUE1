@@ -38,7 +38,7 @@ public class MessageStorage {
    * @param user  user to which the email should be mapped to
    * @param value Email to be mapped to user
    */
-  public static void put(String user, Email value) {
+  public static synchronized void put(String user, Email value) {
     LOG.info("put:(user: " + user + " value: " + value.toString() + ")");
     messages.get(user) //Hashmap<Index, Email> of user
             .put(indexMap.get(user).getAndIncrement(), value);
