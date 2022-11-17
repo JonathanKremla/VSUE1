@@ -13,10 +13,10 @@ import java.util.List;
 
 public class MonitoringServer implements IMonitoringServer {
 
-  DatagramSocket datagramSocket;
   private final InputStream in;
   private final PrintStream out;
   private final Config config;
+  DatagramSocket datagramSocket;
   private UdpListenerThread udpListenerThread;
 
   /**

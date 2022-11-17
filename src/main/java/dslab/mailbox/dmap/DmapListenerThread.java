@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
  * Implementation of the Thread which listens for new DMAP connections,
  * establishes new Connections and then passes the Communication to the {@link DmapCommunicationThread}
  * and resumes listening.
- *
+ * <p>
  * This Threads Lifespan is as long as the Applications Lifespan
  */
 public class DmapListenerThread extends Thread {
