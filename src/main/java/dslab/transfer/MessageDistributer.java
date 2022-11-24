@@ -96,10 +96,10 @@ public class MessageDistributer {
     try {
       if (mailboxSocket != null &&
               mailboxSocket.isConnected() &&
-              mailboxSocket.getPort() == domainConfig.getInt(domain)) {
+              mailboxSocket.getPort() == Integer.parseInt(domainConfig.getString(domain).split(":")[1])) {
         return true;
       }
-      ip = domainConfig.getInt(domain);
+      ip = Integer.parseInt(domainConfig.getString(domain).split(":")[1]);
     } catch (MissingResourceException e) {
       return false;
     }
